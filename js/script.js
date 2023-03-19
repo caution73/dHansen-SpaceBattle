@@ -115,7 +115,7 @@ if(startGame){
 const attackBtn = document.querySelector("div.attack")
 attackBtn.addEventListener("click", (evnt) => {
     evnt.preventDefault();
-    if(game.play){
+    if(game.play && startGame){
         window.alert("Firing forward lasers!")
         game.userShip.attack(game.alienFleet[0])
         if(game.alienFleet[0].hull > 0 && game.userShip.hull > 0){ // If both live.
