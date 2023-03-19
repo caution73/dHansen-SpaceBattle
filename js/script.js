@@ -3,6 +3,8 @@ create game factory to store variables
 */
 
 //create ship factory
+const alienArea = document.querySelector(".alienArea")
+let hullStatus = document.querySelector(".hullStatus")
 
 class Ship {
     constructor(hullParam, firepowerParam, accuracyParam){
@@ -13,26 +15,20 @@ class Ship {
     attack(target){
         if (Math.random() < this.accuracy) {
             target.hull -= this.firepower
-            console.log('Damage dealt!');
+            window.alert('Damage dealt!');
         }else{
-            console.log("It's a miss!")
+            window.alert("It's a miss!")
         }
-
-    }
-    target(){
-
     }
 }
-
 
 class UserShip extends Ship {
     constructor(hullParam, firepowerParam, accuracyParam){
         super(hullParam, firepowerParam, accuracyParam)
+        this.name = "Your ship"
     
     }
 }
-
-
 
 class AlienShip extends Ship {
     constructor(){
@@ -40,7 +36,6 @@ class AlienShip extends Ship {
         let firepower = Math.floor(Math.random()*3) + 2;
         let accuracy = Math.random()*.2 + .6;
         super(hull, firepower, accuracy)
-
     }
 }
 
@@ -50,82 +45,124 @@ class ShipFactory {
     constructor(){
     this.alienFleet = [];
     this.userShip = this.makeUserShip(20, 5, .7);
-    this.continue = true;
+    this.play = true;
     }
     makeAlienShip(){
         const alienShip = new AlienShip()
         this.alienFleet.push(alienShip);
     }
     makeUserShip(hullParam, firepowerParam, accuracyParam){
-        return new UserShip(hullParam, firepowerParam, accuracyParam)
+        const userShip = new UserShip(hullParam, firepowerParam, accuracyParam)
+        return userShip
     }
-    makeMultAlienShip(howMany){
+    makeMultAlienShips(howMany){
         for(let i = 0; i < howMany ; i++){
-            this.makeAlienShip()
+            this.makeAlienShip()  
         }
     }
-    // Combat
-
-    fightRound(ship1, ship2){
-        let first = true;
-        console.log("An enemy craft approaches!")
-        while(ship1.hull > 0 && ship2.hull > 0){
-            console.log("Your ship's hull: " + ship1.hull, "The enemy ship's hull: " + ship2.hull)
-            if (first) {
-                ship1.attack(ship2)
-
-            } else {
-                ship2.attack(ship1)
-            }
-            first = !first;
-        }
-        if(ship1.hull > 0){
-            console.log("You defeated the foe!")
-            this.alienFleet.pop()
-            this.continue = window.confirm("Do you wish to attack again? Click OK to attack again. Click Cancel to retreat")
-            
-        }else {
-            console.log("You lost!")
-            this.continue = false;
-        }
-
+    updateHUD(){
+        let hullStatus = document.querySelector(".hullStatus")
+        hullStatus.textContent = game.userShip.hull;     
     }
-
-    fightBattle(){
-        while(this.alienFleet.length > 0 && this.userShip.hull > 0){
-            if(this.continue){
-            this.fightRound(this.userShip, this.alienFleet[this.alienFleet.length - 1])
-            }else{
-                console.log("You have retreated successfully!")
-                break
-            }
+    playGame(){  
+        this.userShip.hull = 20;
+        alienArea.innerHTML = "";
+        console.log(this.alienFleet.length)
+        if(this.alienFleet.length > 0){
+            this.alienFleet = [];
         }
         if(this.alienFleet.length === 0){
-            console.log("You have defeated the fleet! Return home for recovery!")
+            this.makeMultAlienShips(Math.floor(Math.random()*5) + 2)
         }
+        for (let i = 0; i < game.alienFleet.length; i++) {
+            let alienImg = document.createElement("div");
+            alienImg.classList.add("alienImg");
+            alienArea.append(alienImg);
+        };
+        this.updateHUD()
+        console.log(this.alienFleet)
+        console.log(this.userShip)
+        window.alert("An enemy craft approaches!")
+        window.alert("Choose your action! Attack, or retreat?")
     }
-    /*
-    You attack the first alien ship
-If the ship survives, it attacks you
-If you survive, you attack the ship again
-If it survives, it attacks you again ... etc
-If you destroy the ship, you have the option to attack the next ship or to retreat
-    */
+    playAgain(){
+        game.play = window.confirm("Do you wish to play again? Click OK to play again. Click Cancel if not.")
+            if(game.play){
+                game.playGame()
+            }else{
+                alienArea.innerHTML = "When you're ready to play again, refresh the page!";
+                alienArea.style.color = "white";
+                alienArea.style.fontSize = "6vh";
+                window.alert("Thanks for playing!")
+            }
+    }
 }
 
 
-const Factory = new ShipFactory()
-Factory.makeMultAlienShip(6)
-console.log(Factory)
-Factory.fightBattle()
+const game = new ShipFactory()
+let startGame = window.confirm("Welcome to Space Battle! Would you like to play?")
+if(startGame){
+    game.playGame()
+}else{
+    alienArea.innerHTML = "When you're ready to play, refresh the page!";
+    alienArea.style.color = "white";
+    alienArea.style.fontSize = "6vh";
+}
 
 
-//create user ship class
-
-//create alien ship class
-//create six alien ships
 
 
+const attackBtn = document.querySelector("div.attack")
+attackBtn.addEventListener("click", (evnt) => {
+    evnt.preventDefault();
+    if(game.play){
+        window.alert("Firing forward lasers!")
+        game.userShip.attack(game.alienFleet[0])
+        if(game.alienFleet[0].hull > 0 && game.userShip.hull > 0){ // If both live.
+            window.alert("The enemy returns fire!")
+            game.alienFleet[0].attack(game.userShip)  // Alien returns fire.
+            game.updateHUD()//hullStatus.textContent = game.userShip.hull;
+            if(game.userShip.hull <= 0){ // If user hull would be equal or less than 0.
+                game.userShip.hull = 0; // Set hull to 0.
+                game.updateHUD()  // update hull/hud
+                if(game.userShip.hull <= 0){  // if you die
+                    window.alert("You lost!")  //  you dead
+                    game.playAgain()
+                }
+            } else{
+                window.alert("What's your next move?")  //prompt for attack/retreat here  
+                
+        }     
+            
+        }else{
+            if(game.userShip.hull > 0){
+                game.alienFleet.shift() 
+                window.alert("You defeated the ship!") // you defeat enemy.
+                alienArea.removeChild(alienArea.firstChild) 
+                if(game.alienFleet.length > 0){ // If ship in enemy fleet.
+                    window.alert("Another enemy ship approaches. What do you do?")  //  prompt for attack/retreat
+             
+                }else{
+                    window.alert("You have defeated the fleet! Return home for recovery!")
+                    game.playAgain()
+            // prompt for play again
+                }
+            } 
+        }
+    }
+})
 
+const retreatBtn = document.querySelector("div.retreat")
+retreatBtn.addEventListener("click", (evnt) => {
+    evnt.preventDefault();
+    if(game.play){
+        if(game.alienFleet.length > 0 && game.userShip.hull > 0){
+            window.alert("You have successfully retreated!")
+            game.playAgain()
+        }
+    }
+   
+})
+ 
 
 
